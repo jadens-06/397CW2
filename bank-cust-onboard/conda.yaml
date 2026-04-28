@@ -1,4 +1,4 @@
-name: bank-cust-onboard
+
 channels:
   - conda-forge
 
