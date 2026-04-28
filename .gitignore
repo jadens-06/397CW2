@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.pyc
+
+# Robocorp / environments
+.env/
+.venv/
+conda.yaml.lock
+
+# Output files
+output/
+*.zip
+invalid.txt
+
+# OS
+.DS_Store
