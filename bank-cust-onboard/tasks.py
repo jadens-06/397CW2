@@ -1,5 +1,6 @@
 #=== NOTE === for each line that begins "### TODO- ", do not remove the line
 
+from more_itertools import first, last
 from robocorp.tasks import task
 from robocorp import browser
 
@@ -123,9 +124,10 @@ def open_account(fn, ln, cn):
 
 def zip_agreement_documents():
     ### TODO-11
-    if os.path.exists("agreements") and os.listdir("agreements"):
-        shutil.make_archive("agreements", "zip", ".", "agreements")
-        print("Agreements zipped successfully")
+    credit_filename = f"agreements/{last}-{first}-{acc_no}-credit-agreement.txt"
+    with open(credit_filename, "w") as f:
+        f.write(f"Business Terms and Conditions for account: {acc_no}")
+
     
 def generate_report():
     global page
