@@ -95,7 +95,8 @@ def add_customer(fn, ln, pc, cn):
         page.locator(add_customer_form_last_name).fill(ln)
         page.locator(add_customer_form_zip_code).fill(pc)
         page.locator(add_customer_form_submit).click()
-        page.on("dialog", handle_alert)
+        page.on("dialog", handle_alert)  # This just sets up a listener, doesn't wait
+        # Returns immediately, then open_account() runs
     else:
         ### TODO-08
         print(f"Invalid zip code: {pc}. Skipping customer {fn} {ln}")
