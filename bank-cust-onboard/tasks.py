@@ -102,12 +102,36 @@ def add_customer(fn, ln, pc, cn):
 
 def open_account(fn, ln, cn):
     global page
+    global acc_no
+
     # Click "Open Account" button
     page.locator(open_account_button).click(force=True)
-    # select from list by label
+
+    # Select customer and currency
     page.locator(open_account_customer_select).select_option(f"{fn} {ln}")
     page.locator(open_account_currency_select).select_option(cn)
+
+    # Submit the form
     page.locator(open_account_process).click()
+
+    # --- TODO‑09: Handle alert + extract account number ---
+    alert_text = page.wait_for_event("dialog", timeout=5000).message
+    page.wait_for_event("dialog").accept()
+
+    # Extract digits from alert text
+    acc_no = re.search(r"\d+", alert_text).group()
+
+    # --- Create CREDIT agreement (always required) ---
+    credit_filename = f"agreements/{ln}-{fn}-{acc_no}-credit-agreement.txt"
+    with open(credit_filename, "w") as f:
+        f.write(f"Business Terms and Conditions for account: {acc_no}")
+
+    # --- TODO‑10: FX agreement (only for GBP or Rupee) ---
+    if cn in ["GBP", "Rupee"]:
+        fx_filename = f"agreements/{ln}-{fn}-{acc_no}-FX-agreement.txt"
+        with open(fx_filename, "w") as f:
+            f.write(f"Foreign Exchange Terms and Conditions for account: {acc_no}")
+
 
     global acc_no
     page.on("dialog", handle_alert_acc) # setting acc_no
