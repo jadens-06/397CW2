@@ -149,37 +149,28 @@ def open_account(fn, ln, cn):
     global page
     global acc_no   # <-- MUST be before you assign to acc_no
 
+    # Go back to the main page to ensure we're in the correct state
+    page.goto(url)
+    page.wait_for_timeout(2000)
+    
+    # Click "Bank Manager Login" button again
+    page.locator(bank_manager_login_button).click()
+    page.wait_for_timeout(2000)
+
+    print(f"DEBUG: About to click Open Account button")
     # Click "Open Account" button
     page.locator(open_account_button).click()
-    page.wait_for_timeout(3000)  # Wait longer for the form to load
+    page.wait_for_timeout(3000)
 
+    print(f"DEBUG: Waiting for customer dropdown")
     # Wait for the customer select dropdown to be visible
-    page.locator(open_account_customer_select).wait_for(state="visible", timeout=15000)
+    page.locator(open_account_customer_select).wait_for(state="visible", timeout=10000)
+    print(f"DEBUG: Customer dropdown found!")
     
-    # Click the dropdown to open it
-    page.locator(open_account_customer_select).click()
-    page.wait_for_timeout(1000)
-    
-    # Get all options in the dropdown for debugging
-    options = page.locator(open_account_customer_select + " option")
-    option_count = options.count()
-    print(f"DEBUG: Found {option_count} options in customer dropdown")
-    
-    for i in range(option_count):
-        opt_text = options.nth(i).text_content()
-        print(f"DEBUG: Option {i}: {opt_text}")
-    
-    # Try to select by text
+    # Select customer and currency
     customer_full_name = f"{fn} {ln}"
-    print(f"DEBUG: Trying to select customer: {customer_full_name}")
-    
-    try:
-        page.locator(open_account_customer_select).select_option(customer_full_name)
-    except:
-        print(f"DEBUG: Failed to select by name, trying by value")
-        # Try alternative format if the above fails
-        page.locator(open_account_customer_select).select_option(label=customer_full_name)
-    
+    print(f"DEBUG: Selecting customer: {customer_full_name}")
+    page.locator(open_account_customer_select).select_option(customer_full_name)
     page.locator(open_account_currency_select).select_option(cn)
 
     # Submit the form
