@@ -9,6 +9,7 @@ import re
 import json
 import os
 import shutil
+import zipfile
 from datetime import datetime
 
 # Global variables
@@ -136,12 +137,22 @@ def open_account(fn, ln, cn):
 
 
 def zip_agreement_documents():
-    ### TODO-11
-    credit_filename = f"agreements/{last}-{first}-{acc_no}-credit-agreement.txt"
-    with open(credit_filename, "w") as f:
-        f.write(f"Business Terms and Conditions for account: {acc_no}")
+    agreements_dir = "agreements"
+    if not os.path.isdir(agreements_dir):
+        print(f"No agreements directory found at {agreements_dir}. Skipping archive.")
+        return
 
-    
+    zip_filename = f"agreements_{datetime.now().strftime('%Y%m%d_%H%M%S')}.zip"
+    with zipfile.ZipFile(zip_filename, "w", compression=zipfile.ZIP_DEFLATED) as zipf:
+        for root, _, files in os.walk(agreements_dir):
+            for file_name in files:
+                file_path = os.path.join(root, file_name)
+                archive_name = os.path.relpath(file_path, agreements_dir)
+                zipf.write(file_path, arcname=archive_name)
+
+    print(f"Archived agreement documents to {zip_filename}")
+
+
 def generate_report():
     global page
     page.locator(customers_button).click()
