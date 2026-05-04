@@ -149,10 +149,17 @@ def open_account(fn, ln, cn):
     global page
     global acc_no   # <-- MUST be before you assign to acc_no
 
+    # Refresh the page to ensure the newly added customer appears in the dropdown
+    page.reload()
+    page.wait_for_timeout(2000)
+
     # Click "Open Account" button
     page.locator(open_account_button).click()
     page.wait_for_timeout(2000)  # Wait for the form to load
 
+    # Wait for the customer select dropdown to be visible
+    page.locator(open_account_customer_select).wait_for(state="visible", timeout=10000)
+    
     # Select customer and currency
     page.locator(open_account_customer_select).select_option(f"{fn} {ln}")
     page.locator(open_account_currency_select).select_option(cn)
