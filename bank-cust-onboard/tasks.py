@@ -49,7 +49,7 @@ def onboard_new_customers():
     os.makedirs(agreements_dir, exist_ok=True)
     os.makedirs(output_dir, exist_ok=True)
 
-    with open("new-customers.json", "r") as f:
+    with open("new-customers.json", "r", encoding="utf-8") as f:
         customers = json.load(f)
 
     for customer in customers:
@@ -89,10 +89,7 @@ def bank_manager_login():
     page.locator(bank_manager_login_button).click()
     # page = browser.page()
 
-def onboard_customers():
-    # Create agreements and output directories if they don't exist
-    os.makedirs(agreements_dir, exist_ok=True)
-    os.makedirs(output_dir, exist_ok=True)
+
     
     ### TODO-05
     with open("new-customers.json", "r", encoding="UTF-8") as customer_file:
