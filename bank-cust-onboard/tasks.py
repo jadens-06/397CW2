@@ -1,6 +1,5 @@
 #=== NOTE === for each line that begins "### TODO- ", do not remove the line
 
-from more_itertools import first, last
 from robocorp.tasks import task
 from robocorp import browser
 
@@ -18,6 +17,8 @@ acc_no = ""
 
 # Constants
 url = "https://com397bankdemo.z16.web.core.windows.net/#/login"
+output_dir = "output"
+agreements_dir = "agreements"
 
 ### TODO-02
 zip_code_re = r"^\d{5}(?:-\d{4})?$"
@@ -63,24 +64,21 @@ def bank_manager_login():
     # page = browser.page()
 
 def onboard_customers():
-    # Create agreements directory if it doesn't exist
-    if not os.path.exists("agreements"):
-        os.makedirs("agreements")
+    # Create agreements and output directories if they don't exist
+    os.makedirs(agreements_dir, exist_ok=True)
+    os.makedirs(output_dir, exist_ok=True)
     
     ### TODO-05
-    # set up customer_file
     with open("new-customers.json", "r", encoding="UTF-8") as customer_file:
         customers = json.load(customer_file)
     
     ### TODO-06
     for customer in customers:
-        # split each customer record into individual fields (variables)
         fn = customer["first_name"]
         ln = customer["last_name"]
         pc = customer["zip_code"]
         cn = customer["currency"]
         add_customer(fn, ln, pc, cn)
-        open_account(fn, ln, cn)
 
 def add_customer(fn, ln, pc, cn):
     print(f"Adding customer {fn} {ln}")
@@ -90,18 +88,21 @@ def add_customer(fn, ln, pc, cn):
     # Check post code
     valid_zip_code = re.match(zip_code_re, pc)
 
-    if (valid_zip_code):
+    if valid_zip_code:
         ### TODO-07
         page.locator(add_customer_form_first_name).fill(fn)
         page.locator(add_customer_form_last_name).fill(ln)
         page.locator(add_customer_form_zip_code).fill(pc)
         page.locator(add_customer_form_submit).click()
-        # Wait for the dialog to appear and handle it before returning
         dialog = page.wait_for_event("dialog")
         dialog.accept()
+        open_account(fn, ln, cn)
     else:
         ### TODO-08
-        print(f"Invalid zip code: {pc}. Skipping customer {fn} {ln}")
+        invalid_path = os.path.join(output_dir, "invalid.txt")
+        with open(invalid_path, "a", encoding="UTF-8") as invalid_file:
+            invalid_file.write(f"{fn},{ln},{pc},{cn}\n")
+        print(f"Invalid zip code: {pc}. Logged to {invalid_path}.")
 
 def open_account(fn, ln, cn):
     global page
@@ -119,38 +120,41 @@ def open_account(fn, ln, cn):
 
     # --- Handle alert + extract account number ---
     dialog = page.wait_for_event("dialog")
-    alert_text = dialog.message
-    dialog.accept()
-
-    acc_no = re.search(r"\d+", alert_text).group()
+    handle_alert_acc(dialog)
+    if not acc_no:
+        raise RuntimeError("Could not extract account number from the account creation dialog")
 
     # --- Create CREDIT agreement ---
-    credit_filename = f"agreements/{ln}-{fn}-{acc_no}-credit-agreement.txt"
-    with open(credit_filename, "w") as f:
+    credit_filename = os.path.join(agreements_dir, f"{ln}-{fn}-{acc_no}-credit-agreement.txt")
+    with open(credit_filename, "w", encoding="UTF-8") as f:
         f.write(f"Business Terms and Conditions for account: {acc_no}")
 
     # --- FX agreement (GBP or Rupee only) ---
     if cn in ["GBP", "Rupee"]:
-        fx_filename = f"agreements/{ln}-{fn}-{acc_no}-FX-agreement.txt"
-        with open(fx_filename, "w") as f:
+        fx_filename = os.path.join(agreements_dir, f"{ln}-{fn}-{acc_no}-FX-agreement.txt")
+        with open(fx_filename, "w", encoding="UTF-8") as f:
             f.write(f"Foreign Exchange Terms and Conditions for account: {acc_no}")
 
 
 def zip_agreement_documents():
-    agreements_dir = "agreements"
     if not os.path.isdir(agreements_dir):
         print(f"No agreements directory found at {agreements_dir}. Skipping archive.")
         return
 
     zip_filename = f"agreements_{datetime.now().strftime('%Y%m%d_%H%M%S')}.zip"
-    with zipfile.ZipFile(zip_filename, "w", compression=zipfile.ZIP_DEFLATED) as zipf:
+    zip_path = os.path.join(os.getcwd(), zip_filename)
+    with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED) as zipf:
         for root, _, files in os.walk(agreements_dir):
             for file_name in files:
                 file_path = os.path.join(root, file_name)
                 archive_name = os.path.relpath(file_path, agreements_dir)
                 zipf.write(file_path, arcname=archive_name)
 
-    print(f"Archived agreement documents to {zip_filename}")
+    os.makedirs(output_dir, exist_ok=True)
+    output_zip_path = os.path.join(output_dir, zip_filename)
+    shutil.copy2(zip_path, output_zip_path)
+
+    print(f"Archived agreement documents to {zip_path} and copied to {output_zip_path}")
 
 
 def generate_report():
@@ -158,33 +162,24 @@ def generate_report():
     page.locator(customers_button).click()
     ### TODO-12
     page.wait_for_timeout(2000)
-    table_content = page.locator(customer_list_table).text_content()
-    
-    report_fn = f"report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
-    with open(report_fn, "w", encoding="UTF-8") as report_file:
-        report_file.write("Bank Manager Customer Report\n")
-        report_file.write("="*50 + "\n")
-        report_file.write(table_content)
-    
-    print(f"Report generated: {report_fn}")
+    report_path = os.path.join(output_dir, f"customer_table_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png")
+    page.locator(customer_list_table).screenshot(path=report_path)
+    print(f"Report screenshot saved to {report_path}")
 
 # Alert box handler functions
 def handle_alert(dialog):
     dialog.accept()        
 
 def handle_alert_acc(dialog):
-    global page
     global acc_no
     acc_no = ""
 
     ### TODO-09
     dialog_text = dialog.message
-    if "Account id" in dialog_text or "account" in dialog_text.lower():
-        words = dialog_text.split()
-        for word in words:
-            if word.isdigit() and len(word) > 4:
-                acc_no = word
-                break
-    
+    match = re.search(r"\b(\d{5,})\b", dialog_text)
+    if match:
+        acc_no = match.group(1)
+    else:
+        print(f"Warning: could not extract account number from alert: {dialog_text}")
+
     dialog.accept()
-    page.locator(open_account_button).click()
