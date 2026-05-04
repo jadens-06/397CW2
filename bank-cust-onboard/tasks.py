@@ -117,10 +117,20 @@ def add_customer(fn, ln, pc, cn):
         page.locator(add_customer_form_submit).click()
         dialog = page.wait_for_event("dialog")
         dialog.accept()
+        print(f"DEBUG: Customer {fn} {ln} added successfully")
         page.wait_for_timeout(1000)
         
-        # Now open account for this customer
-        open_account(fn, ln, cn)
+        # Take a screenshot to see the current state
+        screenshot_path = os.path.join(output_dir, f"screenshot_{fn}_{ln}.png")
+        page.screenshot(path=screenshot_path)
+        print(f"DEBUG: Screenshot saved to {screenshot_path}")
+        
+        # Try to open account for this customer
+        try:
+            open_account(fn, ln, cn)
+        except Exception as e:
+            print(f"ERROR opening account for {fn} {ln}: {e}")
+            print(f"DEBUG: Skipping account opening, continuing to next customer")
     else:
         ### TODO-08
         invalid_path = os.path.join(output_dir, "invalid.txt")
