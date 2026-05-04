@@ -43,14 +43,15 @@ customer_list_table = "//html/body/div/div/div[2]/div/div[2]/div/table"
 
 
 @task
-def onboard_customers():
+def onboard_new_customers():
+    bank_manager_login()
+
     os.makedirs(agreements_dir, exist_ok=True)
     os.makedirs(output_dir, exist_ok=True)
 
     with open("new-customers.json", "r", encoding="UTF-8") as customer_file:
         customers = json.load(customer_file)
 
-    ### TODO-06
     for customer in customers:
         fn = customer["first_name"]
         ln = customer["last_name"]
@@ -59,7 +60,8 @@ def onboard_customers():
 
         add_customer(fn, ln, pc, cn)
 
-    return True
+    zip_agreement_documents()
+    generate_report()
 
 def bank_manager_login():
     browser.configure(
