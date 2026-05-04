@@ -89,21 +89,6 @@ def bank_manager_login():
     page.locator(bank_manager_login_button).click()
     # page = browser.page()
 
-    ### TODO-05
-    with open("new-customers.json", "r", encoding="UTF-8") as customer_file:
-        customers = json.load(customer_file)
-
-    for customer in customers:
-        add_customer(
-            customer["first_name"],
-            customer["last_name"],
-            customer["zip_code"],
-            customer["currency"]
-        )
-
-    print("All customers have been processed.")
-    return True
-
 
 def add_customer(fn, ln, pc, cn):
     global page
