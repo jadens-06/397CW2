@@ -150,7 +150,8 @@ def open_account(fn, ln, cn):
     global acc_no   # <-- MUST be before you assign to acc_no
 
     # Click "Open Account" button
-    page.locator(open_account_button).click(force=True)
+    page.locator(open_account_button).click()
+    page.wait_for_timeout(2000)  # Wait for the form to load
 
     # Select customer and currency
     page.locator(open_account_customer_select).select_option(f"{fn} {ln}")
