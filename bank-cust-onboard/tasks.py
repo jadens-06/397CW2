@@ -94,33 +94,20 @@ def bank_manager_login():
     ### TODO-05
     with open("new-customers.json", "r", encoding="UTF-8") as customer_file:
         customers = json.load(customer_file)
+
+    for customer in customers:
+        add_customer(
+            customer["first_name"],
+            customer["last_name"],
+            customer["zip_code"],
+            customer["currency"]
+        )
+
+    return True
     
-    # Read the last processed index
-    state_file = os.path.join(output_dir, "last_processed_index.txt")
-    if os.path.exists(state_file):
-        with open(state_file, "r") as f:
-            last_index = int(f.read().strip())
-    else:
-        last_index = -1
-    
-    # Process the next customer
-    next_index = last_index + 1
-    if next_index < len(customers):
-        customer = customers[next_index]
-        fn = customer["first_name"]
-        ln = customer["last_name"]
-        pc = customer["zip_code"]
-        cn = customer["currency"]
-        add_customer(fn, ln, pc, cn)
-        
-        # Update the state file
-        with open(state_file, "w") as f:
-            f.write(str(next_index))
-        print(f"Processed customer {next_index + 1}/{len(customers)}: {fn} {ln}")
-        return False  # Not all processed yet
     else:
         print("All customers have been processed.")
-        return True  # All processed
+    return True  # All processed
 
 
 def add_customer(fn, ln, pc, cn):
