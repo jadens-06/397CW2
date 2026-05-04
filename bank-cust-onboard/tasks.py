@@ -219,8 +219,6 @@ def create_agreements(fn, ln, cn, acc_no):
             f.write(f"Foreign Exchange Terms and Conditions for account: {acc_no}")
 
     
-
-
 def generate_report():
     global page
     page.locator(customers_button).click()
