@@ -121,10 +121,10 @@ def add_customer(fn, ln, pc, cn):
     valid_zip_code = re.match(zip_code_re, pc)
 
     if valid_zip_code:
-    page.locator(add_customer_form_first_name).fill(fn)
-    page.locator(add_customer_form_last_name).fill(ln)
-    page.locator(add_customer_form_zip_code).fill(pc)
-    page.locator(add_customer_form_submit).click()
+        page.locator(add_customer_form_first_name).fill(fn)
+        page.locator(add_customer_form_last_name).fill(ln)
+        page.locator(add_customer_form_zip_code).fill(pc)
+        page.locator(add_customer_form_submit).click()
 
     dialog = page.wait_for_event("dialog")
     dialog.accept()
