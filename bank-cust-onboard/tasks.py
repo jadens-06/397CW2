@@ -89,8 +89,6 @@ def bank_manager_login():
     page.locator(bank_manager_login_button).click()
     # page = browser.page()
 
-
-    
     ### TODO-05
     with open("new-customers.json", "r", encoding="UTF-8") as customer_file:
         customers = json.load(customer_file)
@@ -103,11 +101,8 @@ def bank_manager_login():
             customer["currency"]
         )
 
+    print("All customers have been processed.")
     return True
-    
-    else:
-        print("All customers have been processed.")
-    return True  # All processed
 
 
 def add_customer(fn, ln, pc, cn):
@@ -138,7 +133,6 @@ def add_customer(fn, ln, pc, cn):
         with open(invalid_path, "a") as f:
             f.write(f"{fn},{ln},{pc},{cn}\n")
 
-    
 
 # Alert box handler functions
 def handle_alert(dialog):
