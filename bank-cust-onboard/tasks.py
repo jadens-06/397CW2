@@ -154,22 +154,65 @@ def open_account(fn, ln, cn):
 
     print(f"DEBUG: Opening account for {fn} {ln}")
     
-    # Click "Open Account" button
-    page.locator(open_account_button).click()
-    page.wait_for_timeout(2000)
+    # Try to find the Open Account button
+    try:
+        button_element = page.locator(open_account_button)
+        print(f"DEBUG: Button found, visible: {button_element.is_visible()}")
+        button_element.click()
+        print(f"DEBUG: Button clicked")
+    except Exception as e:
+        print(f"DEBUG: Error clicking button: {e}")
+        return
+    
+    page.wait_for_timeout(3000)
+    
+    # Check what dropdowns are on the page
+    all_selects = page.locator("select")
+    select_count = all_selects.count()
+    print(f"DEBUG: Found {select_count} select elements on page")
+    
+    for i in range(select_count):
+        try:
+            select_elem = all_selects.nth(i)
+            print(f"DEBUG: Select {i}: {select_elem}")
+        except:
+            pass
 
     print(f"DEBUG: Waiting for customer dropdown")
-    # Wait for the customer select dropdown to be visible
-    page.locator(open_account_customer_select).wait_for(state="visible", timeout=10000)
-    print(f"DEBUG: Customer dropdown found!")
+    try:
+        page.locator(open_account_customer_select).wait_for(state="visible", timeout=5000)
+        print(f"DEBUG: Customer dropdown found!")
+    except Exception as e:
+        print(f"DEBUG: Dropdown not found: {e}")
+        print(f"DEBUG: Trying alternative selector...")
+        # Try to find any select with visible options
+        if select_count > 0:
+            customer_select = all_selects.nth(0)
+            print(f"DEBUG: Using first select element")
+        else:
+            print(f"DEBUG: No select elements found!")
+            return
     
     # Select customer and currency
     customer_full_name = f"{fn} {ln}"
     print(f"DEBUG: Selecting customer: {customer_full_name}")
-    page.locator(open_account_customer_select).select_option(customer_full_name)
-    page.locator(open_account_currency_select).select_option(cn)
+    
+    try:
+        page.locator(open_account_customer_select).select_option(customer_full_name)
+        print(f"DEBUG: Customer selected")
+    except Exception as e:
+        print(f"DEBUG: Failed to select customer: {e}")
+        return
+        
+    try:
+        page.locator(open_account_currency_select).select_option(cn)
+        print(f"DEBUG: Currency selected")
+    except Exception as e:
+        print(f"DEBUG: Failed to select currency: {e}")
+        return
 
     # Submit the form
+    print(f"DEBUG: Clicking submit button")
     page.locator(open_account_process).click()
 
     # --- Handle alert + extract account number ---
