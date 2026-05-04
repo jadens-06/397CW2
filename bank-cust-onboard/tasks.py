@@ -218,20 +218,7 @@ def create_agreements(fn, ln, cn, acc_no):
         with open(fx_path, "w") as f:
             f.write(f"Foreign Exchange Terms and Conditions for account: {acc_no}")
 
-    zip_filename = f"agreements_{datetime.now().strftime('%Y%m%d_%H%M%S')}.zip"
-    zip_path = os.path.join(os.getcwd(), zip_filename)
-    with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED) as zipf:
-        for root, _, files in os.walk(agreements_dir):
-            for file_name in files:
-                file_path = os.path.join(root, file_name)
-                archive_name = os.path.relpath(file_path, agreements_dir)
-                zipf.write(file_path, arcname=archive_name)
-
-    os.makedirs(output_dir, exist_ok=True)
-    output_zip_path = os.path.join(output_dir, zip_filename)
-    shutil.copy2(zip_path, output_zip_path)
-
-    print(f"Archived agreement documents to {zip_path} and copied to {output_zip_path}")
+    
 
 
 def generate_report():
