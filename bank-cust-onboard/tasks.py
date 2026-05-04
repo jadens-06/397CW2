@@ -43,12 +43,23 @@ customer_list_table = "//html/body/div/div/div[2]/div/div[2]/div/table"
 
 
 @task
-def onboard_new_customers():
-    bank_manager_login()
-    all_processed = onboard_customers()
-    if all_processed:
-        zip_agreement_documents()
-        generate_report()
+def onboard_customers():
+    os.makedirs(agreements_dir, exist_ok=True)
+    os.makedirs(output_dir, exist_ok=True)
+
+    with open("new-customers.json", "r", encoding="UTF-8") as customer_file:
+        customers = json.load(customer_file)
+
+    ### TODO-06
+    for customer in customers:
+        fn = customer["first_name"]
+        ln = customer["last_name"]
+        pc = customer["zip_code"]
+        cn = customer["currency"]
+
+        add_customer(fn, ln, pc, cn)
+
+    return True
 
 def bank_manager_login():
     browser.configure(
@@ -110,24 +121,18 @@ def add_customer(fn, ln, pc, cn):
     valid_zip_code = re.match(zip_code_re, pc)
 
     if valid_zip_code:
-        ### TODO-07
-        page.locator(add_customer_form_first_name).fill(fn)
-        page.locator(add_customer_form_last_name).fill(ln)
-        page.locator(add_customer_form_zip_code).fill(pc)
-        page.locator(add_customer_form_submit).click()
-        dialog = page.wait_for_event("dialog")
-        dialog.accept()
-        print(f"Customer {fn} {ln} added successfully")
-        page.wait_for_timeout(1000)
-        
-        # TODO: Fix open_account - for now, manually open account in browser
-        # open_account(fn, ln, cn)
-    else:
-        ### TODO-08
-        invalid_path = os.path.join(output_dir, "invalid.txt")
-        with open(invalid_path, "a", encoding="UTF-8") as invalid_file:
-            invalid_file.write(f"{fn},{ln},{pc},{cn}\n")
-        print(f"Invalid zip code: {pc}. Logged to {invalid_path}.")
+    page.locator(add_customer_form_first_name).fill(fn)
+    page.locator(add_customer_form_last_name).fill(ln)
+    page.locator(add_customer_form_zip_code).fill(pc)
+    page.locator(add_customer_form_submit).click()
+
+    dialog = page.wait_for_event("dialog")
+    dialog.accept()
+
+    print(f"Customer {fn} {ln} added successfully")
+    page.wait_for_timeout(1000)
+
+    
 
 # Alert box handler functions
 def handle_alert(dialog):
@@ -151,21 +156,45 @@ def handle_alert_acc(dialog):
 
 def open_account(fn, ln, cn):
     global page
-    global acc_no   # <-- MUST be before you assign to acc_no
+    global acc_no
 
-    # TODO: Fix this function - XPath selectors are not finding the form elements
-    # For now, manually open accounts in the browser
-    print(f"INFO: Skipping account opening for {fn} {ln} - needs manual completion")
-    
-    # Placeholder for account opening logic
-    # The Open Account button click and dropdown selectors need to be debugged
+    page.locator(open_account_button).click()
+
+    # Select customer
+    full_name = f"{fn} {ln}"
+    page.locator(open_account_customer_select).select_option(label=full_name)
+
+    # Select currency
+    page.locator(open_account_currency_select).select_option(label=cn)
+
+    # Handle alert to capture account number
+    page.once("dialog", handle_alert_acc)
+
+    # Click process
+    page.locator(open_account_process).click()
+
+    page.wait_for_timeout(1000)
+
+    print(f"Account opened for {fn} {ln}, Account No: {acc_no}")
+
+    create_agreements(fn, ln, cn, acc_no)
 
 
-def zip_agreement_documents():
-    ### TODO-11
-    if not os.path.isdir(agreements_dir):
-        print(f"No agreements directory found at {agreements_dir}. Skipping archive.")
-        return
+def create_agreements(fn, ln, cn, acc_no):
+    # Credit agreement
+    credit_filename = f"{ln}-{fn}-{acc_no}-credit-agreement.txt"
+    credit_path = os.path.join(agreements_dir, credit_filename)
+
+    with open(credit_path, "w") as f:
+        f.write(f"Business Terms and Conditions for account: {acc_no}")
+
+    # FX agreement if needed
+    if cn in ["GBP", "Rupee"]:
+        fx_filename = f"{ln}-{fn}-{acc_no}-FX-agreement.txt"
+        fx_path = os.path.join(agreements_dir, fx_filename)
+
+        with open(fx_path, "w") as f:
+            f.write(f"Foreign Exchange Terms and Conditions for account: {acc_no}")
 
     zip_filename = f"agreements_{datetime.now().strftime('%Y%m%d_%H%M%S')}.zip"
     zip_path = os.path.join(os.getcwd(), zip_filename)
