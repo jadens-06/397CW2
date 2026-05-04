@@ -149,19 +149,37 @@ def open_account(fn, ln, cn):
     global page
     global acc_no   # <-- MUST be before you assign to acc_no
 
-    # Refresh the page to ensure the newly added customer appears in the dropdown
-    page.reload()
-    page.wait_for_timeout(2000)
-
     # Click "Open Account" button
     page.locator(open_account_button).click()
-    page.wait_for_timeout(2000)  # Wait for the form to load
+    page.wait_for_timeout(3000)  # Wait longer for the form to load
 
     # Wait for the customer select dropdown to be visible
-    page.locator(open_account_customer_select).wait_for(state="visible", timeout=10000)
+    page.locator(open_account_customer_select).wait_for(state="visible", timeout=15000)
     
-    # Select customer and currency
-    page.locator(open_account_customer_select).select_option(f"{fn} {ln}")
+    # Click the dropdown to open it
+    page.locator(open_account_customer_select).click()
+    page.wait_for_timeout(1000)
+    
+    # Get all options in the dropdown for debugging
+    options = page.locator(open_account_customer_select + " option")
+    option_count = options.count()
+    print(f"DEBUG: Found {option_count} options in customer dropdown")
+    
+    for i in range(option_count):
+        opt_text = options.nth(i).text_content()
+        print(f"DEBUG: Option {i}: {opt_text}")
+    
+    # Try to select by text
+    customer_full_name = f"{fn} {ln}"
+    print(f"DEBUG: Trying to select customer: {customer_full_name}")
+    
+    try:
+        page.locator(open_account_customer_select).select_option(customer_full_name)
+    except:
+        print(f"DEBUG: Failed to select by name, trying by value")
+        # Try alternative format if the above fails
+        page.locator(open_account_customer_select).select_option(label=customer_full_name)
+    
     page.locator(open_account_currency_select).select_option(cn)
 
     # Submit the form
