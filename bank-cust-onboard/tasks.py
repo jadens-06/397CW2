@@ -45,9 +45,10 @@ customer_list_table = "//html/body/div/div/div[2]/div/div[2]/div/table"
 @task
 def onboard_new_customers():
     bank_manager_login()
-    onboard_customers()
-    zip_agreement_documents()
-    generate_report()
+    all_processed = onboard_customers()
+    if all_processed:
+        zip_agreement_documents()
+        generate_report()
 
 def bank_manager_login():
     browser.configure(
@@ -94,8 +95,10 @@ def onboard_customers():
         with open(state_file, "w") as f:
             f.write(str(next_index))
         print(f"Processed customer {next_index + 1}/{len(customers)}: {fn} {ln}")
+        return False  # Not all processed yet
     else:
         print("All customers have been processed.")
+        return True  # All processed
 
 
 def add_customer(fn, ln, pc, cn):
