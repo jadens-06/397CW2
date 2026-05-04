@@ -104,6 +104,26 @@ def add_customer(fn, ln, pc, cn):
             invalid_file.write(f"{fn},{ln},{pc},{cn}\n")
         print(f"Invalid zip code: {pc}. Logged to {invalid_path}.")
 
+# Alert box handler functions
+def handle_alert(dialog):
+    dialog.accept()
+
+
+def handle_alert_acc(dialog):
+    global acc_no
+    acc_no = ""
+
+    ### TODO-09
+    dialog_text = dialog.message
+    match = re.search(r"\b(\d{5,})\b", dialog_text)
+    if match:
+        acc_no = match.group(1)
+    else:
+        print(f"Warning: could not extract account number from alert: {dialog_text}")
+
+    dialog.accept()
+
+
 def open_account(fn, ln, cn):
     global page
     global acc_no   # <-- MUST be before you assign to acc_no
@@ -130,6 +150,7 @@ def open_account(fn, ln, cn):
         f.write(f"Business Terms and Conditions for account: {acc_no}")
 
     # --- FX agreement (GBP or Rupee only) ---
+    ### TODO-10
     if cn in ["GBP", "Rupee"]:
         fx_filename = os.path.join(agreements_dir, f"{ln}-{fn}-{acc_no}-FX-agreement.txt")
         with open(fx_filename, "w", encoding="UTF-8") as f:
@@ -137,6 +158,7 @@ def open_account(fn, ln, cn):
 
 
 def zip_agreement_documents():
+    ### TODO-11
     if not os.path.isdir(agreements_dir):
         print(f"No agreements directory found at {agreements_dir}. Skipping archive.")
         return
@@ -165,21 +187,3 @@ def generate_report():
     report_path = os.path.join(output_dir, f"customer_table_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png")
     page.locator(customer_list_table).screenshot(path=report_path)
     print(f"Report screenshot saved to {report_path}")
-
-# Alert box handler functions
-def handle_alert(dialog):
-    dialog.accept()        
-
-def handle_alert_acc(dialog):
-    global acc_no
-    acc_no = ""
-
-    ### TODO-09
-    dialog_text = dialog.message
-    match = re.search(r"\b(\d{5,})\b", dialog_text)
-    if match:
-        acc_no = match.group(1)
-    else:
-        print(f"Warning: could not extract account number from alert: {dialog_text}")
-
-    dialog.accept()
