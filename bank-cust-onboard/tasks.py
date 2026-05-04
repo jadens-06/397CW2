@@ -117,6 +117,9 @@ def add_customer(fn, ln, pc, cn):
         page.locator(add_customer_form_submit).click()
         dialog = page.wait_for_event("dialog")
         dialog.accept()
+        page.wait_for_timeout(1000)
+        
+        # Now open account for this customer
         open_account(fn, ln, cn)
     else:
         ### TODO-08
@@ -149,18 +152,11 @@ def open_account(fn, ln, cn):
     global page
     global acc_no   # <-- MUST be before you assign to acc_no
 
-    # Go back to the main page to ensure we're in the correct state
-    page.goto(url)
-    page.wait_for_timeout(2000)
+    print(f"DEBUG: Opening account for {fn} {ln}")
     
-    # Click "Bank Manager Login" button again
-    page.locator(bank_manager_login_button).click()
-    page.wait_for_timeout(2000)
-
-    print(f"DEBUG: About to click Open Account button")
     # Click "Open Account" button
     page.locator(open_account_button).click()
-    page.wait_for_timeout(3000)
+    page.wait_for_timeout(2000)
 
     print(f"DEBUG: Waiting for customer dropdown")
     # Wait for the customer select dropdown to be visible
@@ -177,10 +173,13 @@ def open_account(fn, ln, cn):
     page.locator(open_account_process).click()
 
     # --- Handle alert + extract account number ---
+    print(f"DEBUG: Waiting for account creation dialog")
     dialog = page.wait_for_event("dialog")
     handle_alert_acc(dialog)
     if not acc_no:
         raise RuntimeError("Could not extract account number from the account creation dialog")
+
+    print(f"DEBUG: Account created with ID: {acc_no}")
 
     # --- Create CREDIT agreement ---
     credit_filename = os.path.join(agreements_dir, f"{ln}-{fn}-{acc_no}-credit-agreement.txt")
