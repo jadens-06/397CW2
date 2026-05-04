@@ -60,8 +60,17 @@ def onboard_new_customers():
 
         add_customer(fn, ln, pc, cn)
 
-    zip_agreement_documents()
-    generate_report()
+def zip_agreement_documents():
+    zip_filename = f"agreements_{datetime.now().strftime('%Y%m%d_%H%M%S')}.zip"
+    zip_path = os.path.join(os.getcwd(), zip_filename)
+
+    with zipfile.ZipFile(zip_path, "w") as zipf:
+        for root, _, files in os.walk(agreements_dir):
+            for file in files:
+                file_path = os.path.join(root, file)
+                zipf.write(file_path, os.path.relpath(file_path, agreements_dir))
+
+    shutil.copy2(zip_path, os.path.join(output_dir, zip_filename))
 
 def bank_manager_login():
     browser.configure(
@@ -115,11 +124,11 @@ def onboard_customers():
 
 
 def add_customer(fn, ln, pc, cn):
-    print(f"Adding customer {fn} {ln}")
     global page
+
+    print(f"Adding customer {fn} {ln}")
     page.locator(add_customer_button).click()
 
-    # Check post code
     valid_zip_code = re.match(zip_code_re, pc)
 
     if valid_zip_code:
@@ -128,11 +137,18 @@ def add_customer(fn, ln, pc, cn):
         page.locator(add_customer_form_zip_code).fill(pc)
         page.locator(add_customer_form_submit).click()
 
-    dialog = page.wait_for_event("dialog")
-    dialog.accept()
+        dialog = page.wait_for_event("dialog")
+        dialog.accept()
 
-    print(f"Customer {fn} {ln} added successfully")
-    page.wait_for_timeout(1000)
+        print(f"Customer {fn} {ln} added successfully")
+        page.wait_for_timeout(1000)
+
+        open_account(fn, ln, cn)
+
+    else:
+        invalid_path = os.path.join(output_dir, "invalid.txt")
+        with open(invalid_path, "a") as f:
+            f.write(f"{fn},{ln},{pc},{cn}\n")
 
     
 
