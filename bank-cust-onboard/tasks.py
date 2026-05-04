@@ -49,16 +49,19 @@ def onboard_new_customers():
     os.makedirs(agreements_dir, exist_ok=True)
     os.makedirs(output_dir, exist_ok=True)
 
-    with open("new-customers.json", "r", encoding="UTF-8") as customer_file:
-        customers = json.load(customer_file)
+    with open("new-customers.json", "r") as f:
+        customers = json.load(f)
 
     for customer in customers:
-        fn = customer["first_name"]
-        ln = customer["last_name"]
-        pc = customer["zip_code"]
-        cn = customer["currency"]
+        add_customer(
+            customer["first_name"],
+            customer["last_name"],
+            customer["zip_code"],
+            customer["currency"]
+        )
 
-        add_customer(fn, ln, pc, cn)
+    zip_agreement_documents()
+    generate_report()
 
 def zip_agreement_documents():
     zip_filename = f"agreements_{datetime.now().strftime('%Y%m%d_%H%M%S')}.zip"
@@ -143,6 +146,7 @@ def add_customer(fn, ln, pc, cn):
         print(f"Customer {fn} {ln} added successfully")
         page.wait_for_timeout(1000)
 
+        # 🔥 THIS LINE IS CRITICAL
         open_account(fn, ln, cn)
 
     else:
